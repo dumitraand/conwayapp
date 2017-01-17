@@ -2,6 +2,7 @@
 #define __UTILS_H__
 #include <stdio.h>
 #include <stdlib.h>
+#include <omp.h>
 #include <time.h>
 
 static const int WIDTH = 10;
