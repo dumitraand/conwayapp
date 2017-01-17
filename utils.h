@@ -12,11 +12,11 @@ static const int HEIGHT = 10;
 static const int NO_STEPS = 100;
 static int width;
 static int height;
-static int **grid;
-static int **old_grid;
+static char **grid;
+static char **old_grid;
 
 //Used for slave matrixes initialization
-int **initializedMatrix(int);
+char **initializedMatrix(int);
 
 //This function initializes the grid
 void initGrid(int, int);
@@ -30,8 +30,8 @@ int getAlive(int, int);
 //Function that randomly brings cells to life
 void setRandomAlive(int);
 
-int* newGeneration(int *h_cells, int *h_borderTop, int *h_borderBot,
-                   int *h_borderRight, int *h_borderLeft, int height, int width);
+char* newGeneration(char *h_cells, char *h_borderTop, char *h_borderBot,
+                   char *h_borderRight, char *h_borderLeft, int height, int width);
 
 //Function that generates a step for each cell
 void gridStep();

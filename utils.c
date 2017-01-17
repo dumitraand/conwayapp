@@ -1,9 +1,9 @@
 #include "utils.h"
 
-int** initializedMatrix(int size) {
-  int **matrix = (int**)calloc(size, sizeof(int*));
+char** initializedMatrix(int size) {
+  char **matrix = (char**)calloc(size, sizeof(char*));
   for(int i = 0; i < size; i++)
-    matrix[i] = (int*)calloc(size, sizeof(int));
+    matrix[i] = (char*)calloc(size, sizeof(char));
   return matrix;
 }
 //This function initializes the grid
@@ -11,13 +11,13 @@ void initGrid(int h, int w) {
   *&width = w;
   *&height = h;
   int i;
-  grid = (int**)calloc(h, sizeof(int*));
+  grid = (char**)calloc(h, sizeof(char*));
   for(i = 0; i < h; i++)
-    grid[i] = (int*)calloc(w, sizeof(int));
+    grid[i] = (char*)calloc(w, sizeof(char));
 
-  old_grid = (int**)calloc(h, sizeof(int*));
+  old_grid = (char**)calloc(h, sizeof(char*));
   for(i = 0; i < h; i++)
-    old_grid[i] = (int*)calloc(w, sizeof(int));
+    old_grid[i] = (char*)calloc(w, sizeof(char));
 }
 
 void copyGrid() {
