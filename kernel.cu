@@ -3,8 +3,8 @@
 #include <device_launch_parameters.h>
 
 
-__global__ void cellsKernel(int *cells, int height, int width, int *resultCells,
-			    int *borderTop, int *borderRight, int *bordertBot, int *borderLeft)
+__global__ void cellsKernel(char *cells, int height, int width, char *resultCells,
+			    char *borderTop, char *borderRight, char *bordertBot, char *borderLeft)
 {
 	int worldSize = height * width;
 	int currentCellX, currentCellY, aliveCells, currentRow;
@@ -32,7 +32,7 @@ __global__ void cellsKernel(int *cells, int height, int width, int *resultCells,
 		if (currentCellY == 0)
 			NW = borderLeft[currentCellY];
 		else if (currentRow == 0)
-			NW = borderTop[currentCellY - 1];		
+			NW = borderTop[currentCellY - 1];
 		else
 			NW = cells[currentCellX - width + currentCellY - 1];
 		if (currentRow + 1 == height)
@@ -54,8 +54,8 @@ __global__ void cellsKernel(int *cells, int height, int width, int *resultCells,
 	}
 }
 
-void computeCells(int *&cells, int height, int width, int *&resultCells, int threadsCount,
-		  int *borderTop, int *borderRight, int *borderBot, int *borderLeft)
+void computeCells(char *&cells, int height, int width, char *&resultCells, char threadsCount,
+		  char *borderTop, char *borderRight, char *borderBot, char *borderLeft)
 {
 	if ((width * height) % threadsCount != 0) {
 		fprintf(stderr, "%s", "The product of square dimensions must be multiple of the number of threads!\n");
@@ -64,7 +64,7 @@ void computeCells(int *&cells, int height, int width, int *&resultCells, int thr
 	}
 
 	int blocksCount = min(32768, (height * width) / threadsCount);
-	
+
 	cellsKernel <<<blocksCount, threadsCount >>> (cells, height, width, resultCells, borderTop, borderRight, borderBot, borderLeft);
 }
 
@@ -81,31 +81,31 @@ int getGreatestDivisor(int n)
 		if (res <= 1024)
 			return res;
 	}
-	
+
 	return res;
 }
 
-extern "C"  int* newGeneration(int *h_cells, int *h_borderTop, int *h_borderBot,
-		   int *h_borderRight, int *h_borderLeft, int height, int width)
+extern "C"  char* newGeneration(char *h_cells, char *h_borderTop, char *h_borderBot,
+		   char *h_borderRight, char *h_borderLeft, int height, int width)
 {
-	int *d_cells, *d_resultCells, *d_borderTop, *d_borderRight, *d_borderBot, *d_borderLeft;
+	char *d_cells, *d_resultCells, *d_borderTop, *d_borderRight, *d_borderBot, *d_borderLeft;
 
 	int worldSize = height * width;
 	int num_threads = height * width;
 
-	cudaMalloc(&d_cells, worldSize * sizeof(int));
+	cudaMalloc(&d_cells, worldSize * sizeof(char));
 
-	cudaMalloc(&d_resultCells, worldSize * sizeof(int));
+	cudaMalloc(&d_resultCells, worldSize * sizeof(char));
 
-	cudaMalloc(&d_borderTop, (width + 1) * sizeof(int));
+	cudaMalloc(&d_borderTop, (width + 1) * sizeof(char));
 
-	cudaMalloc(&d_borderRight, (height) * sizeof(int));
+	cudaMalloc(&d_borderRight, (height) * sizeof(char));
 
-	cudaMalloc(&d_borderBot, (width + 1) * sizeof(int));
+	cudaMalloc(&d_borderBot, (width + 1) * sizeof(char));
 
-	cudaMalloc(&d_borderLeft, (height + 2) * sizeof(int));
+	cudaMalloc(&d_borderLeft, (height + 2) * sizeof(char));
 
-	cudaMemcpy(d_cells, h_cells, worldSize * sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(d_cells, h_cells, worldSize * sizeof(char), cudaMemcpyHostToDevice);
 
 	cudaMemcpy(d_borderTop, h_borderTop, width + 1, cudaMemcpyHostToDevice);
 
@@ -120,7 +120,7 @@ extern "C"  int* newGeneration(int *h_cells, int *h_borderTop, int *h_borderBot,
 	computeCells(d_cells, height, width, d_resultCells, num_threads, d_borderTop,
 		     d_borderRight, d_borderBot, d_borderLeft);
 
-	cudaMemcpy(h_cells, d_resultCells, worldSize * sizeof(int), cudaMemcpyDeviceToHost);
+	cudaMemcpy(h_cells, d_resultCells, worldSize * sizeof(char), cudaMemcpyDeviceToHost);
 
 	cudaFree(d_cells);
 	cudaFree(d_resultCells);
@@ -131,4 +131,3 @@ extern "C"  int* newGeneration(int *h_cells, int *h_borderTop, int *h_borderBot,
 
 	return h_cells;
 }
-

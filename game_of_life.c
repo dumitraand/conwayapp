@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
     fclose(in);
 
     int size = matrix_size/slave_limit;
-    int slave_matrix[size][size];
+    char slave_matrix[size][size];
     for(int i = 0; i < slave_limit; i++)
       for(int j = 0; j < slave_limit; j++) {
         for(int k = 0; k < size; k++)
@@ -68,14 +68,14 @@ int main(int argc, char **argv) {
               slave_matrix[lines[k] -  size * i][cols[k] - size * j] = 1;
         }
         MPI_Send(&size, 1, MPI_INT, i*slave_limit+j + 1, MASTER_MATRIX_SIZE_SEND, MPI_COMM_WORLD);
-        MPI_Send(&slave_matrix, size*size, MPI_INT, i*slave_limit+j + 1, MASTER_MATRIX_SEND, MPI_COMM_WORLD);
+        MPI_Send(&slave_matrix, size*size, MPI_CHAR, i*slave_limit+j + 1, MASTER_MATRIX_SEND, MPI_COMM_WORLD);
       }
 
     fprintf(out, "%d\n", matrix_size);
     MPI_Status status;
     for(int i = 0; i < slave_limit; i++)
       for(int j = 0; j < slave_limit; j++) {
-        MPI_Recv(&slave_matrix, size*size, MPI_INT, i*slave_limit+j+1, MASTER_MATRIX_SEND, MPI_COMM_WORLD, &status);
+        MPI_Recv(&slave_matrix, size*size, MPI_CHAR, i*slave_limit+j+1, MASTER_MATRIX_SEND, MPI_COMM_WORLD, &status);
         for(int k = 0; k < size; k++)
           for(int l = 0; l < size; l++)
             if(slave_matrix[k][l])
@@ -91,18 +91,18 @@ int main(int argc, char **argv) {
     MPI_Status status;
     MPI_Recv(&size, 1, MPI_INT, MASTER, MASTER_MATRIX_SIZE_SEND, MPI_COMM_WORLD, &status);
 
-    int matrix[size][size];
-    MPI_Recv(&matrix, size*size, MPI_INT, MASTER, MASTER_MATRIX_SEND, MPI_COMM_WORLD, &status);
+    char matrix[size][size];
+    MPI_Recv(&matrix, size*size, MPI_CHAR, MASTER, MASTER_MATRIX_SEND, MPI_COMM_WORLD, &status);
 
     //Vectors to be passed between slaves
-    int left_vector[size + 2];
-    int top_vector[size + 1];
-    int bottom_vector[size + 1];
-    int right_vector[size];
-    int column_left[size];
-    int column_right[size];
-    int row_top[size];
-    int row_bottom[size];
+    char left_vector[size + 2];
+    char top_vector[size + 1];
+    char bottom_vector[size + 1];
+    char right_vector[size];
+    char column_left[size];
+    char column_right[size];
+    char row_top[size];
+    char row_bottom[size];
     //Initialize vectors
     for(int i = 0; i < size; i++)
       left_vector[i] = top_vector[i] = bottom_vector[i] = right_vector[i] = 0;
@@ -122,49 +122,49 @@ int main(int argc, char **argv) {
       pass_bottom = 0;
     for(int step = 0; step < noSteps; step++) {
       if(pass_left && pass_top) {
-        MPI_Send(&matrix[0][0], 1, MPI_INT, world_rank - slave_limit - 1, CORNER_SEND, MPI_COMM_WORLD);
-        MPI_Recv(&left_vector[0], 1, MPI_INT, world_rank - slave_limit - 1, CORNER_SEND, MPI_COMM_WORLD, &status);
+        MPI_Send(&matrix[0][0], 1, MPI_CHAR, world_rank - slave_limit - 1, CORNER_SEND, MPI_COMM_WORLD);
+        MPI_Recv(&left_vector[0], 1, MPI_CHAR, world_rank - slave_limit - 1, CORNER_SEND, MPI_COMM_WORLD, &status);
       }
       if(pass_left && pass_bottom) {
-        MPI_Send(&matrix[size - 1][0], 1, MPI_INT, world_rank + slave_limit - 1, CORNER_SEND, MPI_COMM_WORLD);
-        MPI_Recv(&left_vector[size + 1], 1, MPI_INT, world_rank + slave_limit - 1, CORNER_SEND, MPI_COMM_WORLD, &status);
+        MPI_Send(&matrix[size - 1][0], 1, MPI_CHAR, world_rank + slave_limit - 1, CORNER_SEND, MPI_COMM_WORLD);
+        MPI_Recv(&left_vector[size + 1], 1, MPI_CHAR, world_rank + slave_limit - 1, CORNER_SEND, MPI_COMM_WORLD, &status);
       }
       if(pass_right && pass_top) {
-        MPI_Send(&matrix[0][size - 1], 1, MPI_INT, world_rank - slave_limit + 1, CORNER_SEND, MPI_COMM_WORLD);
-        MPI_Recv(&top_vector[size], 1, MPI_INT, world_rank - slave_limit + 1, CORNER_SEND, MPI_COMM_WORLD, &status);
+        MPI_Send(&matrix[0][size - 1], 1, MPI_CHAR, world_rank - slave_limit + 1, CORNER_SEND, MPI_COMM_WORLD);
+        MPI_Recv(&top_vector[size], 1, MPI_CHAR, world_rank - slave_limit + 1, CORNER_SEND, MPI_COMM_WORLD, &status);
       }
       if(pass_right && pass_bottom) {
-        MPI_Send(&matrix[size-1][size - 1], 1, MPI_INT, world_rank + slave_limit + 1, CORNER_SEND, MPI_COMM_WORLD);
-        MPI_Recv(&bottom_vector[size], 1, MPI_INT, world_rank + slave_limit + 1, CORNER_SEND, MPI_COMM_WORLD, &status);
+        MPI_Send(&matrix[size-1][size - 1], 1, MPI_CHAR, world_rank + slave_limit + 1, CORNER_SEND, MPI_COMM_WORLD);
+        MPI_Recv(&bottom_vector[size], 1, MPI_CHAR, world_rank + slave_limit + 1, CORNER_SEND, MPI_COMM_WORLD, &status);
       }
       if(pass_left) {
         for(int i = 0; i < size; i++)
           column_left[i] = matrix[i][0];
-        MPI_Send(&column_left, size, MPI_INT, world_rank - 1, VECTOR_SEND, MPI_COMM_WORLD);
-        MPI_Recv(&left_vector[1], size, MPI_INT, world_rank - 1, VECTOR_SEND, MPI_COMM_WORLD, &status);
+        MPI_Send(&column_left, size, MPI_CHAR, world_rank - 1, VECTOR_SEND, MPI_COMM_WORLD);
+        MPI_Recv(&left_vector[1], size, MPI_CHAR, world_rank - 1, VECTOR_SEND, MPI_COMM_WORLD, &status);
       }
       if(pass_right) {
         for(int i = 0; i < size; i++)
           column_right[i] = matrix[i][size - 1];
-        MPI_Send(&column_right, size, MPI_INT, world_rank + 1, VECTOR_SEND, MPI_COMM_WORLD);
-        MPI_Recv(&right_vector[0], size, MPI_INT, world_rank + 1, VECTOR_SEND, MPI_COMM_WORLD, &status);
+        MPI_Send(&column_right, size, MPI_CHAR, world_rank + 1, VECTOR_SEND, MPI_COMM_WORLD);
+        MPI_Recv(&right_vector[0], size, MPI_CHAR, world_rank + 1, VECTOR_SEND, MPI_COMM_WORLD, &status);
       }
       if(pass_top) {
         for(int i = 0; i < size; i++)
           row_top[i] = matrix[0][i];
-        MPI_Send(&row_top, size, MPI_INT, world_rank - slave_limit, VECTOR_SEND, MPI_COMM_WORLD);
-        MPI_Recv(&top_vector[0], size, MPI_INT, world_rank - slave_limit, VECTOR_SEND, MPI_COMM_WORLD, &status);
+        MPI_Send(&row_top, size, MPI_CHAR, world_rank - slave_limit, VECTOR_SEND, MPI_COMM_WORLD);
+        MPI_Recv(&top_vector[0], size, MPI_CHAR, world_rank - slave_limit, VECTOR_SEND, MPI_COMM_WORLD, &status);
       }
       if(pass_bottom) {
         for(int i = 0; i < size; i++)
           row_bottom[i] = matrix[size-1][i];
-        MPI_Send(&row_bottom, size, MPI_INT, world_rank + slave_limit, VECTOR_SEND, MPI_COMM_WORLD);
-        MPI_Recv(&bottom_vector[0], size, MPI_INT, world_rank + slave_limit, VECTOR_SEND, MPI_COMM_WORLD, &status);
+        MPI_Send(&row_bottom, size, MPI_CHAR, world_rank + slave_limit, VECTOR_SEND, MPI_COMM_WORLD);
+        MPI_Recv(&bottom_vector[0], size, MPI_CHAR, world_rank + slave_limit, VECTOR_SEND, MPI_COMM_WORLD, &status);
       }
 
       //HERE IS THE PROCESSING!
       if (world_rank == 1) {
-      int *h_cells = (int*)calloc(size * size, sizeof(int));
+      char *h_cells = (char*)calloc(size * size, sizeof(char));
 
       for (int i = 0; i < size; i++)
         for (int j = 0; j < size; j++)
